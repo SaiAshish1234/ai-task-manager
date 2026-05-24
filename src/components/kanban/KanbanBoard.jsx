@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '../../lib/supabase';
+import AIPanel from './AIPanel';
 
 const COLUMNS = [
   { id: 'todo', label: 'To Do', color: '#6366f1', bg: '#eef2ff' },
@@ -13,7 +14,7 @@ const PRIORITY = {
   low:    { label: 'Low',    color: '#22c55e', bg: '#f0fdf4', dot: '#22c55e' },
 };
 
-function TaskCard({ task, onMove, onDelete }) {
+function TaskCard({ task, onMove, onDelete, onAI }) {
   const [hovered, setHovered] = useState(false);
   const p = PRIORITY[task.priority] || PRIORITY.medium;
 
@@ -102,22 +103,30 @@ function TaskCard({ task, onMove, onDelete }) {
               → {col.label}
             </button>
           ))}
-          <button
-            onClick={() => onDelete(task.id)}
-            style={{
-              fontSize: '0.65rem',
-              fontWeight: 500,
-              padding: '3px 8px',
-              background: '#fef2f2',
-              border: 'none',
-              borderRadius: '99px',
-              color: '#ef4444',
-              cursor: 'pointer',
-              marginLeft: 'auto',
-            }}
-          >
-            Delete
-          </button>
+          <div style={{ marginLeft: 'auto', display: 'flex', gap: '5px' }}>
+            <button
+              onClick={() => onAI(task)}
+              style={{
+                fontSize: '0.65rem', fontWeight: 500,
+                padding: '3px 8px', background: '#eef2ff',
+                border: 'none', borderRadius: '99px',
+                color: '#6366f1', cursor: 'pointer',
+              }}
+            >
+              ✦ AI
+            </button>
+            <button
+              onClick={() => onDelete(task.id)}
+              style={{
+                fontSize: '0.65rem', fontWeight: 500,
+                padding: '3px 8px', background: '#fef2f2',
+                border: 'none', borderRadius: '99px',
+                color: '#ef4444', cursor: 'pointer',
+              }}
+            >
+              Delete
+            </button>
+          </div>
         </div>
       )}
     </div>
@@ -287,7 +296,7 @@ function AddTaskModal({ columnId, onAdd, onClose }) {
   );
 }
 
-function Column({ column, tasks, onMove, onDelete, onAddTask }) {
+function Column({ column, tasks, onMove, onDelete, onAddTask, onAI }) {
   return (
     <div style={{
       flex: 1,
@@ -329,7 +338,7 @@ function Column({ column, tasks, onMove, onDelete, onAddTask }) {
           </div>
         ) : (
           tasks.map(task => (
-            <TaskCard key={task.id} task={task} onMove={onMove} onDelete={onDelete} />
+            <TaskCard key={task.id} task={task} onMove={onMove} onDelete={onDelete} onAI={onAI} />
           ))
         )}
       </div>
@@ -366,7 +375,8 @@ function Column({ column, tasks, onMove, onDelete, onAddTask }) {
 export default function KanbanBoard() {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [modal, setModal] = useState(null); // columnId or null
+  const [modal, setModal] = useState(null);
+  const [aiTask, setAiTask] = useState(null);
 
   // Load tasks from Supabase
   useEffect(() => {
@@ -398,6 +408,24 @@ export default function KanbanBoard() {
     await supabase.from('tasks').update({ column: newColumn }).eq('id', taskId);
   };
 
+  const updateTask = async (updatedTask) => {
+    setTasks(prev => prev.map(t => t.id === updatedTask.id ? updatedTask : t));
+    await supabase.from('tasks').update({
+      priority: updatedTask.priority,
+      description: updatedTask.description,
+    }).eq('id', updatedTask.id);
+  };
+
+  const addSubtasks = async (subtasks) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    const newTasks = subtasks.map(title => ({
+      title, description: '', priority: 'medium',
+      column: 'todo', user_id: user.id,
+    }));
+    const { data, error } = await supabase.from('tasks').insert(newTasks).select();
+    if (!error && data) setTasks(prev => [...prev, ...data]);
+  };
+
   const deleteTask = async (taskId) => {
     setTasks(prev => prev.filter(t => t.id !== taskId));
     await supabase.from('tasks').delete().eq('id', taskId);
@@ -424,6 +452,7 @@ export default function KanbanBoard() {
             onMove={moveTask}
             onDelete={deleteTask}
             onAddTask={(colId) => setModal(colId)}
+            onAI={(task) => setAiTask(task)}
           />
         ))}
       </div>
@@ -433,6 +462,15 @@ export default function KanbanBoard() {
           columnId={modal}
           onAdd={addTask}
           onClose={() => setModal(null)}
+        />
+      )}
+
+      {aiTask && (
+        <AIPanel
+          task={aiTask}
+          onAddSubtasks={addSubtasks}
+          onUpdateTask={updateTask}
+          onClose={() => setAiTask(null)}
         />
       )}
     </>
