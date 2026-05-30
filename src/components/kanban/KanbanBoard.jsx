@@ -458,6 +458,33 @@ export default function KanbanBoard() {
           onClose={() => setAiTask(null)}
         />
       )}
+      {/* Bottom stats bar */}
+<div style={{
+  marginTop: '2rem',
+  padding: '1rem 1.25rem',
+  background: 'rgba(255,255,255,0.03)',
+  backdropFilter: 'blur(12px)',
+  border: '1px solid rgba(255,255,255,0.07)',
+  borderRadius: '12px',
+  display: 'flex',
+  gap: '2rem',
+  alignItems: 'center',
+}}>
+  {[
+    { label: 'Total', value: tasks.length, color: '#a5b4fc' },
+    { label: 'In Progress', value: tasks.filter(t => t.column === 'inprogress').length, color: '#fcd34d' },
+    { label: 'Done', value: tasks.filter(t => t.column === 'done').length, color: '#6ee7b7' },
+    { label: 'High Priority', value: tasks.filter(t => t.priority === 'high').length, color: '#fca5a5' },
+  ].map(({ label, value, color }) => (
+    <div key={label} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+      <div style={{ fontSize: '1.1rem', fontWeight: 700, color, filter: `drop-shadow(0 0 6px ${color})`, letterSpacing: '-0.02em' }}>{value}</div>
+      <div style={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.3)', fontWeight: 500, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{label}</div>
+    </div>
+  ))}
+  <div style={{ marginLeft: 'auto', fontSize: '0.7rem', color: 'rgba(255,255,255,0.2)' }}>
+    {tasks.filter(t => t.column === 'done').length} of {tasks.length} tasks completed
+  </div>
+</div>
     </>
   );
 }

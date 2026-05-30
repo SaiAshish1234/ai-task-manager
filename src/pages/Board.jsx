@@ -14,11 +14,18 @@ export default function Board() {
       }}>
         <div>
           <h1 style={{
-            fontSize: '1.35rem', fontWeight: 700,
-            color: '#fff', letterSpacing: '-0.02em', marginBottom: '0.25rem',
-          }}>
-            My Board
-          </h1>
+  fontSize: '1.75rem',
+  fontWeight: 800,
+  letterSpacing: '-0.03em',
+  marginBottom: '0.25rem',
+  background: 'linear-gradient(105deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0.1) 25%, rgba(165,180,252,0.8) 50%, rgba(255,255,255,0.05) 75%, rgba(255,255,255,0.9) 100%)',
+  WebkitBackgroundClip: 'text',
+  WebkitTextFillColor: 'transparent',
+  backgroundClip: 'text',
+  filter: 'drop-shadow(0 0 16px rgba(99,102,241,0.4))',
+}}>
+  My Board
+</h1>
           <p style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.3)' }}>
             Drag tasks between columns to update their status
           </p>
